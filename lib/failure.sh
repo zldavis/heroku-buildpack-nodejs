@@ -140,3 +140,20 @@ warn_unmet_dep() {
     warn "Unmet dependencies don't fail npm install but may cause runtime issues" "https://github.com/npm/npm/issues/7494"
   fi
 }
+
+warn_deprecated() {
+  echo "
+******************************************************
+Warning: You are using a custom URL for your buildpack
+         that will shortly be deprecated. To prevent
+         your builds from failing, you can run the
+         following command to point to the official
+         buildpack:
+
+heroku buildpacks:clear
+
+Love,
+Heroku
+******************************************************
+"
+}
