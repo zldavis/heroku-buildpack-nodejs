@@ -23,6 +23,7 @@ STDLIB_FILE=$(mktemp -t stdlib.XXXXX)
 
 curl --silent --retry 5 --retry-max-time 15 'https://lang-common.s3.amazonaws.com/buildpack-stdlib/v7/stdlib.sh' > "$STDLIB_FILE"
 source "$STDLIB_FILE"
+source $BP_DIR/lib/buildinfo.sh
 source $BP_DIR/lib/output.sh
 source $BP_DIR/lib/monitor.sh
 source $BP_DIR/lib/json.sh
@@ -61,6 +62,20 @@ trap 'handle_failure' ERR
 [ -e "$BUILD_DIR/node_modules" ] && PREBUILD=true || PREBUILD=false
 [ -f "$BUILD_DIR/yarn.lock" ] && YARN=true || YARN=false
 [ -f "$BUILD_DIR/package-lock.json" ] && NPM_LOCK=true || NPM_LOCK=false
+
+if [[ -e "$BUILD_DIR/node_modules" ]]; then
+  buildinfo_set "checked-in-node-modules" "true"
+else 
+  buildinfo_set "checked-in-node-modules" "false"
+fi
+
+if $YARN; then
+  buildinfo_set "package-manager" "yarn"
+  buildinfo_set "has-lock-file" "true"
+else 
+  buildinfo_set "package-manager" "npm"
+  buildinfo_set "has-lock-file" "$NPM_LOCK"
+fi
 
 ### Failures that should be caught immediately
 
@@ -102,6 +117,10 @@ install_bins() {
   local npm_engine=$(read_json "$BUILD_DIR/package.json" ".engines.npm")
   local yarn_engine=$(read_json "$BUILD_DIR/package.json" ".engines.yarn")
 
+  buildinfo_set "node-version-request" "$node_engine"
+  buildinfo_set "npm-version-request" "$npm_engine"
+  buildinfo_set "yarn-vesrion-request" "$yarn_engine"
+
   if [ -n "$iojs_engine" ]; then
     echo "engines.iojs (package.json):  $iojs_engine (iojs)"
   else
@@ -126,6 +145,7 @@ install_bins() {
     monitor "install-npm-binary" install_npm "$npm_engine" "$BUILD_DIR/.heroku/node" $NPM_LOCK
     local node_version="$(node --version)"
     mcount "version.node.$node_version"
+    buildinfo_set "node-version" "$(node --version)"
   fi
 
   # Download yarn if there is a yarn.lock file or if the user
@@ -137,8 +157,10 @@ install_bins() {
 
   if $YARN; then
     mcount "version.yarn.$(yarn --version)"
+    buildinfo_set "yarn-version" "$(yarn --version)"
   else
     mcount "version.npm.$(npm --version)"
+    buildinfo_set "npm-version" "$(npm --version)"
   fi
 
   warn_old_npm
@@ -150,6 +172,15 @@ install_bins | output "$LOG_FILE"
 restore_cache() {
   local cache_status="$(get_cache_status)"
   local cache_directories="$(get_cache_directories)"
+
+  buildinfo_set "cache-status" "$cache_status"
+  if [[ "$cache_directories" == "" ]]; then
+    restore_default_cache_directories "$BUILD_DIR" "$CACHE_DIR"
+    buildinfo_set "custom-cache-directories" "false"
+  else
+    restore_custom_cache_directories "$BUILD_DIR" "$CACHE_DIR" $cache_directories
+    buildinfo_set "custom-cache-directories" "true"
+  fi
 
   if $YARN; then
     if [ -e "$BUILD_DIR/node_modules" ]; then
@@ -259,6 +290,7 @@ summarize_build() {
   fi
 
   mmeasure 'modules.size' "$(measure_size)"
+  buildinfo_set "modules-size" "$(measure_size)"
 }
 
 install_plugin $BP_DIR $BUILD_DIR
@@ -266,7 +298,10 @@ install_plugin $BP_DIR $BUILD_DIR
 header "Build succeeded!" | output "$LOG_FILE"
 mcount "compile"
 summarize_build | output "$LOG_FILE"
+buildinfo_set "node-build-success" "true"
 
 warn_no_start "$LOG_FILE"
 warn_unmet_dep "$LOG_FILE"
 warn_old_npm_lockfile $NPM_LOCK
+
+log_buildinfo

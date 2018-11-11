@@ -63,6 +63,11 @@ log_build_scripts() {
   local heroku_postbuild=$(read_json "$BUILD_DIR/package.json" ".scripts[\"heroku-postbuild\"]")
   local postinstall=$(read_json "$BUILD_DIR/package.json" ".scripts[\"heroku-postbuild\"]")
 
+  buildinfo_set "build-script" "$build"
+  buildinfo_set "postinstall-script" "$postinstall"
+  buildinfo_set "heroku-prebuild-script" "$heroku_prebuild"
+  buildinfo_set "heroku-postbuild-script" "$heroku_postbuild"
+
   if [ -n "$build" ]; then
     mcount "scripts.build"
 
@@ -127,15 +132,19 @@ yarn_prune_devdependencies() {
 
   if [ "$NODE_ENV" == "test" ]; then
     echo "Skipping because NODE_ENV is 'test'"
+    buildinfo_set "skipped-yarn-prune" "true"
     return 0
   elif [ "$NODE_ENV" != "production" ]; then
     echo "Skipping because NODE_ENV is not 'production'"
+    buildinfo_set "skipped-yarn-prune" "true"
     return 0
   elif [ -n "$YARN_PRODUCTION" ]; then
     echo "Skipping because YARN_PRODUCTION is '$YARN_PRODUCTION'"
+    buildinfo_set "skipped-yarn-prune" "true"
     return 0
   else 
     cd "$build_dir" 
+    buildinfo_set "skipped-yarn-prune" "false"
     monitor "yarn-prune" yarn install --frozen-lockfile --ignore-engines --ignore-scripts --prefer-offline 2>&1
   fi
 }
@@ -145,6 +154,7 @@ npm_node_modules() {
   local production=${NPM_CONFIG_PRODUCTION:-false}
 
   if [ -e $build_dir/package.json ]; then
+    buildinfo_set "package-json-exists" "true"
     cd $build_dir
 
     if [ -e $build_dir/package-lock.json ]; then
@@ -157,6 +167,7 @@ npm_node_modules() {
     monitor "npm-install" npm install --production=$production --unsafe-perm --userconfig $build_dir/.npmrc 2>&1
   else
     echo "Skipping (no package.json)"
+    buildinfo_set "package-json-exists" "false"
   fi
 }
 

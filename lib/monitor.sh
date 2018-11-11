@@ -55,4 +55,7 @@ monitor() {
 
   mtime "exec.$command_name.time" "${start}"
   mmeasure "exec.$command_name.memory" "$(cat $peak_mem_output)"
+
+  buildinfo_time "$command_name-time" "$start"
+  buildinfo_set "$command_name-memory" "$(cat $peak_mem_output)"
 }
