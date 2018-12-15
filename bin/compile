@@ -78,7 +78,6 @@ else
 fi
 
 ### Failures that should be caught immediately
-echo 0
 
 fail_dot_heroku "$BUILD_DIR"
 fail_dot_heroku_node "$BUILD_DIR"
@@ -86,8 +85,6 @@ fail_invalid_package_json "$BUILD_DIR"
 fail_multiple_lockfiles "$BUILD_DIR"
 warn_prebuilt_modules "$BUILD_DIR"
 warn_missing_package_json "$BUILD_DIR"
-
-echo 1
 
 ### Behavior flags
 [ ! "$NEW_BUILD_SCRIPT_BEHAVIOR" ] && NEW_BUILD_SCRIPT_BEHAVIOR=$(read_json "$BUILD_DIR/package.json" ".[\"heroku-run-build-script\"]")
@@ -299,4 +296,4 @@ warn_no_start "$LOG_FILE"
 warn_unmet_dep "$LOG_FILE"
 warn_old_npm_lockfile $NPM_LOCK
 
-log_buildinfo
+log_build_data
