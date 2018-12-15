@@ -495,11 +495,10 @@ warn_node_engine() {
 warn_prebuilt_modules() {
   local build_dir=${1:-}
 
-  bd_bool "checked-in-node-modules" "[[ -e "$build_dir/node_modules" ]]"
-
   if [[ -e "$build_dir/node_modules" ]]; then
     warning "node_modules checked into source control" "https://blog.heroku.com/node-habits-2016#9-only-git-the-important-bits"
     mcount 'warnings.modules.prebuilt'
+    bd_set "checked-in-node-modules" "true"
   fi
 }
 

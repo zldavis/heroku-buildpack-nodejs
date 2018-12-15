@@ -71,10 +71,10 @@ trap 'handle_failure' ERR
 
 if "$YARN"; then
   bd_set "node-package-manager" "yarn"
-  bd_bool "has-node-lock-file" "true"
+  bd_set "has-node-lock-file" "true"
 else
   bd_set "node-package-manager" "npm"
-  bd_bool "has-node-lock-file" "$NPM_LOCK"
+  bd_set "has-node-lock-file" "$NPM_LOCK"
 fi
 
 ### Failures that should be caught immediately
@@ -293,7 +293,7 @@ install_plugin $BP_DIR $BUILD_DIR
 header "Build succeeded!" | output "$LOG_FILE"
 mcount "compile"
 summarize_build | output "$LOG_FILE"
-bd_bool "node-build-success" "true"
+bd_set "node-build-success" "true"
 
 warn_no_start "$LOG_FILE"
 warn_unmet_dep "$LOG_FILE"
