@@ -1,5 +1,9 @@
 test: heroku-18 heroku-16 cedar-14
 
+build:
+	@GOOS=darwin GOARCH=amd64 go build -v -o ./vendor/resolve-version-darwin ./cmd/resolve-version
+	@GOOS=linux GOARCH=amd64 go build -v -o ./vendor/resolve-version-linux ./cmd/resolve-version
+
 shellcheck:
 	@shellcheck -x bin/compile bin/detect bin/release bin/test bin/test-compile
 	@shellcheck -x lib/**
