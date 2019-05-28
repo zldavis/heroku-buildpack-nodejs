@@ -133,6 +133,41 @@ npm_node_modules() {
   fi
 }
 
+supports_npm_ci() {
+  local build_dir=${1:-}
+  local npm_version
+
+  npm_version=$(npm --version)
+  # major_string will be ex: "4." "5." "10"
+  local major_string=${npm_version:0:2}
+  # strip any "."s from major_string
+  local major=${major_string//.}
+
+  # We should only run `npm ci` if all of the manifest files are there, and we are running at least npm 6.x
+  # `npm ci` was introduced in the 5.x line in 5.7.0, but this sees very little usage, < 5% of builds
+  if [[ -e "$build_dir/package.json" ]] && [[ -e "$build_dir/package-lock.json" ]] && (( major >= 6 )); then
+    echo "true"
+  else
+    echo "false"
+  fi
+}
+
+npm_ci() {
+  local build_dir=${1:-}
+  local production=${NPM_CONFIG_PRODUCTION:-false}
+
+  # Fall back to `npm install` if needed
+  if [[ "$(supports_npm_ci "$build_dir")" == "false" ]]; then
+    meta_set "supports_npm_ci" "false"
+    npm_node_modules "$build_dir"
+  else
+    meta_set "supports_npm_ci" "true"
+    cd "$build_dir" || return
+    echo "Installing node modules"
+    monitor "npm-ci" npm ci --production="$production" --unsafe-perm --userconfig "$build_dir/.npmrc" 2>&1
+  fi
+}
+
 npm_rebuild() {
   local build_dir=${1:-}
   local production=${NPM_CONFIG_PRODUCTION:-false}

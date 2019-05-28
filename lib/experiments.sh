@@ -113,3 +113,10 @@ experiments_get() {
 experiments_list() {
   kv_keys "$EXPERIMENTS_DATA_FILE"
 }
+
+# Turn an experiment on, mainly useful for development
+#
+# Ex: experiments_override "test-name" "true"
+experiments_override() {
+  kv_set "$EXPERIMENTS_DATA_FILE" "$1" "$2"
+}

@@ -52,6 +52,8 @@ source "$BP_DIR/lib/kvstore.sh"
 source "$BP_DIR/lib/metadata.sh"
 # shellcheck source=lib/builddata.sh
 source "$BP_DIR/lib/builddata.sh"
+# shellcheck source=lib/experiments.sh
+source "$BP_DIR/lib/experiments.sh"
 
 export PATH="$BUILD_DIR/.heroku/node/bin:$BUILD_DIR/.heroku/yarn/bin":$PATH
 
@@ -92,6 +94,7 @@ meta_create "$CACHE_DIR"
 ### Save build info
 log_initial_state
 generate_uuids
+experiments_init "nodejs" "$CACHE_DIR" "$BP_DIR/experiments"
  
 ### Failures that should be caught immediately
 
@@ -234,7 +237,12 @@ build_dependencies() {
     echo "Prebuild detected (node_modules already exists)"
     npm_rebuild "$BUILD_DIR"
   else
-    npm_node_modules "$BUILD_DIR"
+    # experiments_override "use-npm-ci" "true"
+    if [[ $(experiments_get "use-npm-ci") ]]; then
+      npm_ci "$BUILD_DIR"
+    else
+      npm_node_modules "$BUILD_DIR"
+    fi
   fi
 
   mtime "modules.time.cache.$cache_status" "${start}"

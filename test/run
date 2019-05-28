@@ -8,6 +8,33 @@
 #  assertCapturedError
 #}
 
+testNpmCi() {
+  local log_file
+  log_file=$(mktemp)
+  cache=$(mktmpdir)
+  overwrite_experiment "$cache" "use-npm-ci" "true"
+
+  BUILDPACK_LOG_FILE="$log_file" compile "node-10" "$cache"
+
+  # make sure that build scripts are being called
+  assertCaptured "heroku-prebuild script"
+  assertCaptured "build script"
+  assertCaptured "postinstall script"
+  assertCapturedSuccess
+
+  # test logging
+  assertFileContains "supports_npm_ci=true" "$log_file"
+  assertFileContains "npm-ci-time=" "$log_file"
+  assertFileContains "npm-ci-memory=" "$log_file"
+
+  # test re-using the cache
+  echo "" > "$log_file"
+  BUILDPACK_LOG_FILE="$log_file" compile "node-10" "$cache"
+}
+
+# testNpmCiBuildScripts()
+
+
 testFlatmapStream() {
   compile "flatmap-stream"
   assertCaptured "flatmap-stream module has been removed from the npm registry"
@@ -1265,6 +1292,21 @@ release() {
 
 assertFile() {
   assertEquals "$1" "$(cat ${compile_dir}/$2)"
+}
+
+overwrite_experiment() {
+  local cache_dir="$1"
+  local experiment="$2"
+  local value="$3"
+  local schema="${4:1}"
+
+  if [[ ! -f "$cache_dir/experiments/nodejs" ]]; then
+    mkdir -p "$cache_dir/experiments"
+    touch "$cache_dir/experiments/nodejs"
+    echo "#version=$schema" >> "$cache_dir/experiments/nodejs"
+  fi
+
+  echo "$experiment=$value" >> "$cache_dir/experiments/nodejs"
 }
 
 source "$(pwd)"/test/shunit2
