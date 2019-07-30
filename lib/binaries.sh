@@ -95,6 +95,7 @@ install_nodejs() {
   mv /tmp/node-v"$number"-"$os"-"$cpu"/* "$dir"
   echo "chmod +x $dir/bin/*"
   chmod +x "$dir"/bin/*
+  echo "after"
 }
 
 install_npm() {
