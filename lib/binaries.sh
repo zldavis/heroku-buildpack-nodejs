@@ -109,9 +109,11 @@ install_npm() {
 
   ls /app/.heroku/node/bin
 
+  # running this works
   npm --version
-
-  npm_version="$(npm --version)"
+  # but this hangs??
+  npm_version="$(npm --version --no-update-notifier)"
+  # and we never get here
   echo "running here"
 
   # If the user has not specified a version of npm, but has an npm lockfile
