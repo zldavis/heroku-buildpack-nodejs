@@ -107,7 +107,11 @@ install_npm() {
   echo "running here"
   echo "$PATH"
 
-  npm_version="$(/app/.heroku/node/bin/npm --version)"
+  ls /app/.heroku/node/bin
+
+  npm --version
+
+  npm_version="$(npm --version)"
   echo "running here"
 
   # If the user has not specified a version of npm, but has an npm lockfile
