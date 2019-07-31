@@ -105,6 +105,8 @@ install_npm() {
   local dir="$2"
   local npm_lock="$3"
   echo "running here"
+  echo "$PATH"
+
   npm_version="$(npm --version)"
   echo "running here"
 
