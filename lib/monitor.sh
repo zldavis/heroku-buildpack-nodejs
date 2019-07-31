@@ -36,11 +36,9 @@ monitor_memory_usage() {
   echo "5"
   # ps gives us kb, let's convert to mb for convenience
   echo "$((peak / 1024))" > "$output_file"
-  echo "6"
 
   # After wait returns we can get the exit code of $command
   wait $pid
-  echo "7"
 
   # wait a second time in case the trap was executed
   # http://veithen.github.io/2014/11/16/sigterm-propagation.html
