@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+ # something went wrong!
+>&2 echo "Something failed!"
+exit 1
